@@ -1,0 +1,10 @@
+# SSH Anahtarları ve gizli dosyalar (Kesinlikle git'e yüklenmesin!)
+ssh/
+*.pem
+*.key
+id_rsa*
+stajyer_key*
+
+# İşletim sistemi ve log dosyaları
+.DS_Store
+*.log

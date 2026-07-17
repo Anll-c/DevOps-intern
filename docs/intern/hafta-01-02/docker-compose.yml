@@ -1,0 +1,14 @@
+services:
+  ubuntu-ssh:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: hafta-01-02-ubuntu-ssh
+    container_name: hafta-01-02-ubuntu
+    ports:
+      - "2222:22"
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    volumes:
+      - ./ssh/authorized_keys:/home/usr/.ssh/authorized_keys:ro
+    restart: unless-stopped
