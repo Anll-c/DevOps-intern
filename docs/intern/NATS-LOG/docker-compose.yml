@@ -1,0 +1,45 @@
+name: nats-log-stack
+
+services:
+  nats:
+    image: nats:2.10.2
+    container_name: nats-log-nats
+    restart: unless-stopped
+    command: ["-c", "/etc/nats/nats.conf"]
+    ports:
+      - "${NATS_CLIENT_PORT:-4222}:4222"
+      - "${NATS_MONITOR_PORT:-8222}:8222"
+    environment:
+      NATS_USER: ${NATS_USER:-intern}
+      NATS_PASSWORD: ${NATS_PASSWORD:-intern123}
+    volumes:
+      - ./nats/nats.conf:/etc/nats/nats.conf:ro
+      - nats-data:/data
+    networks:
+      - nats-log
+
+  go-api:
+    build:
+      context: ./go-api
+      dockerfile: ../DockerFile
+    container_name: nats-log-go-api
+    restart: unless-stopped
+    depends_on:
+      - nats
+    environment:
+      NATS_URL: nats://intern:intern123@nats:4222
+      NATS_SUBJECT_PREFIX: logs.size
+      POLL_INTERVAL: 1s
+      LOG_PATHS: /logs/app.log,/logs/access.log
+      APP_LOG_LEVEL: info
+    volumes:
+      - ./go-api/logs:/logs:ro
+    networks:
+      - nats-log
+
+networks:
+  nats-log:
+    driver: bridge
+
+volumes:
+  nats-data:
