@@ -7,12 +7,13 @@ import (
 	"os"
 	"strings"
 	"time"
-	"github.com/nats-io/nats.go/v2"
+
+	"github.com/nats-io/nats.go"
 )
 
-type LogMetric struct{
+type LogStructure struct {
 	Filename string `json:"filename"`
-	Size int `json:"size"`
+	Size     int    `json:"size"`
 }
 
 func main() {
@@ -20,29 +21,27 @@ func main() {
 	Subject_Prefx := os.Getenv("NATS_SUBJECT_PREFIX")
 	Log_Paths := strings.Split(os.Getenv("LOG_PATHS"), ",")
 
-	nc, err := nats.Connect(Nats_URL)
-	if err != nil { 
-		log.Fatal("Nats Connection error",err)
+	nats_connection, err := nats.Connect(Nats_URL)
+	if err != nil {
+		log.Fatal("Nats Connection error", err)
 	}
-	defer nc.Close()
+	defer nats_connection.Close()
 
 	ticker := time.NewTicker(1 * time.Second)
 	defer ticker.Stop()
-	
-	for range ticker.C{
-		for _, log_path := range Log_Paths{
+
+	for range ticker.C {
+		for _, log_path := range Log_Paths {
 			file_info, err := os.Stat(log_path)
 			if err == nil {
-				metric := LogMetric{
+				metric := LogStructure{
 					Filename: file_info.Name(),
-					Size: int(file_info.Size()),
+					Size:     int(file_info.Size()),
 				}
-				jsonData,_ := json.Marshal(metric)
+				jsonData, _ := json.Marshal(metric)
 				subject := fmt.Sprintf("%s.%s", Subject_Prefx, metric.Filename)
 
-				if err := nc.Publish(subject, jsonData); err != nil {
-					log.Println("publish error:", err)
-				}
+				nats_connection.Publish(subject, jsonData)
 			}
 		}
 	}
