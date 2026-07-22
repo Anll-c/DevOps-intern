@@ -10,5 +10,5 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     volumes:
-      - ./ssh/authorized_keys:/home/usr/.ssh/authorized_keys:ro
+      - ./ssh/authorized_keys:/home/usr2/.ssh/authorized_keys:ro
     restart: unless-stopped
