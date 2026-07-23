@@ -17,8 +17,9 @@ func main() {
 
 	fmt.Println(a)
 	fmt.Println(b)
-	b["year"] = "12312"
+	b["C"] = "12312"
 
 	fmt.Println(a)
+	fmt.Println()
 	fmt.Println(b)
 }
