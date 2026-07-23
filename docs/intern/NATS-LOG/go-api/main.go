@@ -18,14 +18,14 @@ type TotalLogStructure struct {
 }
 
 type LogStructure struct {
-	Filename string `json:"filename"`
-	Size     int    `json:"size"`
+	Filename string  `json:"filename"`
+	Size     float64 `json:"size"`
 }
 
-func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) int {
+func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) float64 {
 	metric := LogStructure{
 		Filename: fileInfo.Name(),
-		Size:     int(fileInfo.Size()),
+		Size:     float64(fileInfo.Size()),
 	}
 
 	jsonData, err := json.Marshal(metric)
@@ -41,7 +41,7 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) i
 		return 0
 	}
 
-	log.Printf("Published message for file name:%s size:%d", metric.Filename, metric.Size)
+	log.Printf("Published message for file name:%s size:%.3f KB", metric.Filename, metric.Size/1024)
 	return metric.Size
 }
 
@@ -75,10 +75,10 @@ func scanAndPublish(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 					info, err := os.Stat(fullPath)
 					if err == nil {
 						size := processLogFile(nc, subjectPrefix, info)
-						if size > 0 {
-							totalCount++
-							totalSize += float64(size)
-						}
+
+						totalCount++
+						totalSize += size
+
 					}
 				}
 			}
@@ -86,10 +86,10 @@ func scanAndPublish(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 			// .log dosyası ise
 			if strings.HasSuffix(fileInfo.Name(), ".log") {
 				size := processLogFile(nc, subjectPrefix, fileInfo)
-				if size > 0 {
-					totalCount++
-					totalSize += float64(size)
-				}
+
+				totalCount++
+				totalSize += size
+
 			}
 		}
 		log.Printf("Total log files processed: %d, Total size: %.4f MB\n\n", totalCount, totalSize/1024/1024)
@@ -108,7 +108,7 @@ func main() {
 	}
 	defer natsConnection.Close()
 
-	ticker := time.NewTicker(15 * time.Second)
+	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
 	for range ticker.C {
