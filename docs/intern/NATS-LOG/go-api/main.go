@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"log"
+	"net/http"
 	"os"
 	"path/filepath"
 	"strings"
@@ -45,7 +46,7 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) f
 	return metric.Size
 }
 
-func scanAndPublish(nc *nats.Conn, logPaths []string, subjectPrefix string) {
+func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 	totalCount := 0
 	var totalSize float64 = 0.0
 
@@ -111,7 +112,13 @@ func main() {
 	ticker := time.NewTicker(5 * time.Second)
 	defer ticker.Stop()
 
-	for range ticker.C {
-		scanAndPublish(natsConnection, logPaths, subjectPrefix)
-	}
+	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+
+			publishLogFiles(natsConnection, logPaths, subjectPrefix)
+
+			fmt.Fprintln(w, "Log monitoring started.")
+		}()
+	})
+	log.Fatal(http.ListenAndServe(":8080", nil))
 }

@@ -26,5 +26,6 @@ COPY --from=build /out/go-api /app/go-api
 
 USER app
 
+EXPOSE 8080
 ENTRYPOINT ["/app/go-api"] 
 #entrypoing cmd farkı
