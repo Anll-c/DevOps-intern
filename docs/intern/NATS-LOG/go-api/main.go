@@ -1,0 +1,124 @@
+package main
+
+import (
+	"encoding/json"
+	"fmt"
+	"log"
+	"net/http"
+	"os"
+	"path/filepath"
+	"strings"
+	"time"
+
+	"github.com/nats-io/nats.go"
+)
+
+type TotalLogStructure struct {
+	TotalCount int `json:"total_count"`
+	TotalSize  int `json:"total_size"`
+}
+
+type LogStructure struct {
+	Filename string  `json:"filename"`
+	Size     float64 `json:"size"`
+}
+
+func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) float64 {
+	metric := LogStructure{
+		Filename: fileInfo.Name(),
+		Size:     float64(fileInfo.Size()),
+	}
+
+	jsonData, err := json.Marshal(metric)
+	if err != nil {
+		log.Printf("Error marshaling json for %s: %v", metric.Filename, err)
+		return 0
+	}
+
+	subject := fmt.Sprintf("%s.%s", subjectPrefix, metric.Filename)
+	err = nc.Publish(subject, jsonData)
+	if err != nil {
+		log.Printf("Error publishing message for file %s: %v", metric.Filename, err)
+		return 0
+	}
+
+	log.Printf("Published message for file name:%s size:%.3f KB", metric.Filename, metric.Size/1024)
+	return metric.Size
+}
+
+func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
+	totalCount := 0
+	var totalSize float64 = 0.0
+
+	for _, logPath := range logPaths {
+		logPath = strings.TrimSpace(logPath)
+		if logPath == "" {
+			continue
+		}
+
+		fileInfo, err := os.Stat(logPath)
+		if err != nil {
+			log.Printf("Error accessing file %s: %v", logPath, err)
+			continue
+		}
+
+		// Klasör ise içine bak
+		if fileInfo.IsDir() {
+			files, err := os.ReadDir(logPath)
+			if err != nil {
+				log.Printf("Error reading directory %s: %v", logPath, err)
+				continue
+			}
+
+			for _, file := range files {
+				if !file.IsDir() && strings.HasSuffix(file.Name(), ".log") {
+					fullPath := filepath.Join(logPath, file.Name()) //filepath
+					info, err := os.Stat(fullPath)
+					if err == nil {
+						size := processLogFile(nc, subjectPrefix, info)
+
+						totalCount++
+						totalSize += size
+
+					}
+				}
+			}
+		} else {
+			// .log dosyası ise
+			if strings.HasSuffix(fileInfo.Name(), ".log") {
+				size := processLogFile(nc, subjectPrefix, fileInfo)
+
+				totalCount++
+				totalSize += size
+
+			}
+		}
+		log.Printf("Total log files processed: %d, Total size: %.4f MB\n\n", totalCount, totalSize/1024/1024)
+	}
+}
+
+func main() {
+	fmt.Println("STARTING NATS LOG MONITORING SERVICE")
+	natsURL := os.Getenv("NATS_URL")
+	subjectPrefix := os.Getenv("NATS_SUBJECT_PREFIX")
+	logPaths := strings.Split(os.Getenv("LOG_PATHS"), ",")
+
+	natsConnection, err := nats.Connect(natsURL)
+	if err != nil {
+		log.Fatal("Nats Connection error", err)
+	}
+	defer natsConnection.Close()
+
+	ticker := time.NewTicker(5 * time.Second)
+	defer ticker.Stop()
+
+	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
+		go func() {
+
+			publishLogFiles(natsConnection, logPaths, subjectPrefix)
+
+			fmt.Fprintln(w, "Log monitoring started.")
+		}()
+	})
+	log.Fatal(http.ListenAndServe(":8080", nil))
+}

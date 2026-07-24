@@ -1,44 +1,47 @@
-name: nats-log-stack
+name: nats-log
 
 services:
   nats:
     image: nats:2.10.2
-    container_name: nats-log-nats
+    container_name: nats-log
     restart: unless-stopped
     command: ["-c", "/etc/nats/nats.conf"]
     ports:
-      - "${NATS_CLIENT_PORT:-4222}:4222"
+      - "${NATS_CLIENT_PORT:-4222}:4222"  
       - "${NATS_MONITOR_PORT:-8222}:8222"
+      #Portlarda hangisi container'a giriş için hangisi host'a giriş ve env ile bu şekilde kullanılmasının sebebi nedir?
     environment:
-      NATS_USER: ${NATS_USER:-intern}
-      NATS_PASSWORD: ${NATS_PASSWORD:-intern123}
+      NATS_USER: usr
+      NATS_PASSWORD: usr1935
     volumes:
       - ./nats/nats.conf:/etc/nats/nats.conf:ro
       - nats-data:/data
     networks:
-      - nats-log
+      - nats-log-network
 
   go-api:
     build:
       context: ./go-api
-      dockerfile: ../DockerFile
+      dockerfile: ./DockerFile
     container_name: nats-log-go-api
     restart: unless-stopped
+    ports:
+      - "${GO_API_PORT:-8080}:8080"
     depends_on:
       - nats
     environment:
-      NATS_URL: nats://intern:intern123@nats:4222
+      NATS_URL: nats://usr:usr1935@nats:4222
       NATS_SUBJECT_PREFIX: logs.size
       POLL_INTERVAL: 1s
-      LOG_PATHS: /logs/app.log,/logs/access.log
+      LOG_PATHS: /logs
       APP_LOG_LEVEL: info
     volumes:
-      - ./go-api/logs:/logs:ro
+      - /var/log:/logs:ro
     networks:
-      - nats-log
+      - nats-log-network
 
 networks:
-  nats-log:
+  nats-log-network:
     driver: bridge
 
 volumes:
