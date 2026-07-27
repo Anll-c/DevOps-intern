@@ -1,8 +1,7 @@
 package main
 
 import (
-	"fmt"
-	"log"
+	"log/slog"
 	"net/http"
 	"os"
 	"strings"
@@ -10,28 +9,42 @@ import (
 )
 
 func main() {
-	fmt.Println("STARTING NATS LOG MONITORING SERVICE")
+	Logger()
+	slog.Info("Starting NATS Log Publisher API")
 	natsURL := os.Getenv("NATS_URL")
 	subjectPrefix := os.Getenv("NATS_SUBJECT_PREFIX")
 	logPaths := strings.Split(os.Getenv("LOG_PATHS"), ",")
 
 	natsConnection, err := connectNATS(natsURL)
 	if err != nil {
-		log.Fatal("Failed to connect to NATS:", err)
+		slog.Error("There was an error connecting to NATS",
+			"url", natsURL,
+			"error", err,
+		)
+		defer natsConnection.Close()
+	}
+
+	if natsConnection != nil {
+		defer natsConnection.Close()
 	}
 
 	defer natsConnection.Close()
 
 	ticker := time.NewTicker(5 * time.Second)
+	ticker.Stop()
 	defer ticker.Stop()
 	isRunning := false
 
 	http.HandleFunc("/start", func(w http.ResponseWriter, r *http.Request) {
 		if isRunning {
-			fmt.Fprintln(w, "Log monitoring is already running.")
+			slog.Warn("Log monitoring is already running.")
+			sendJSONResponse(w, http.StatusConflict, map[string]string{
+				"status":  "already_running",
+				"message": "Log monitoring is already running.",
+			})
 			return
 		}
-		fmt.Fprintln(w, "Log monitoring started.")
+
 		go func() {
 			isRunning = true
 			ticker.Reset(5 * time.Second)
@@ -39,19 +52,36 @@ func main() {
 				publishLogFiles(natsConnection, logPaths, subjectPrefix)
 			}
 		}()
+
+		slog.Info("Log monitoring started")
+		sendJSONResponse(w, http.StatusOK, map[string]string{
+			"status":  "started",
+			"message": "Log monitoring started.",
+		})
+
 	})
 
 	http.HandleFunc("/stop", func(w http.ResponseWriter, r *http.Request) {
 		if isRunning {
 			ticker.Stop()
 			isRunning = false
-			fmt.Fprintln(w, "Log monitoring stopped.")
-			log.Print(".log counting stopped")
+			slog.Info("Log monitoring stopped")
+			sendJSONResponse(w, http.StatusOK, map[string]string{
+				"status":  "stopped",
+				"message": "Log monitoring stopped.",
+			})
+
 		} else {
-			fmt.Fprintln(w, "Log monitoring is not running.")
+			slog.Warn("Log monitoring is already stopped")
+			sendJSONResponse(w, http.StatusConflict, map[string]string{
+				"status":  "already_stopped",
+				"message": "Log monitoring is not running.",
+			})
+			return
+
 		}
 
 	})
 
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	slog.Error("HTTP server error", "error", http.ListenAndServe(":8080", nil))
 }

@@ -11,7 +11,7 @@ COPY . ./
 #Burada src 
 #tüm dosyaları kopyalama sebebi
 RUN CGO_ENABLED=0 GOOS=linux go build -o /out/go-api . 
-#farlklı os ler için aynı anda nasıl derlenebilir
+#farlklı os ler için aynı anda nasıl derlenebilir, docker buildx --platform
 
 FROM alpine:3.20 
 #alpine dışında ne kullanılabilir(scratch,debian)

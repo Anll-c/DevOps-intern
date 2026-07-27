@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 
 	"github.com/nats-io/nats.go"
@@ -22,7 +22,10 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) f
 
 	jsonData, err := json.Marshal(metric)
 	if err != nil {
-		log.Printf("Error marshaling json for %s: %v", metric.Filename, err)
+		slog.Error("Failed to marshal log structure to JSON",
+			"filename", metric.Filename,
+			"error", err,
+		)
 		return 0
 	}
 
@@ -31,16 +34,17 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) f
 	if nc.IsConnected() {
 		err = nc.Publish(subject, jsonData)
 		if err != nil {
-			log.Printf("Error publishing message for file %s: %v", metric.Filename, err)
+			slog.Error("Failed to publish message for file",
+				"filename", metric.Filename,
+				"error", err,
+			)
 			return 0
 		}
 	}
-	if nc.Status() != nats.CONNECTED {
-		log.Printf("Skipping publish for %s: NATS not connected (status: %v)", metric.Filename, nc.Status())
-		return 0
-	} else {
-		log.Printf("Published message for file name:%s size:%.3f KB", metric.Filename, metric.Size/1024)
-		return metric.Size
-	}
+	slog.Info("Published message for file",
+		"filename", metric.Filename,
+		"size", fmt.Sprintf("%.3f KB", metric.Size/1024),
+	)
+	return metric.Size
 
 }
