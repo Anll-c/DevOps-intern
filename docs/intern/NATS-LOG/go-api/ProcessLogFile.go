@@ -27,12 +27,20 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) f
 	}
 
 	subject := fmt.Sprintf("%s.%s", subjectPrefix, metric.Filename)
-	err = nc.Publish(subject, jsonData)
-	if err != nil {
-		log.Printf("Error publishing message for file %s: %v", metric.Filename, err)
+
+	if !nc.IsConnected() {
+		err = nc.Publish(subject, jsonData)
+		if err != nil {
+			log.Printf("Error publishing message for file %s: %v", metric.Filename, err)
+			return 0
+		}
+	}
+	if nc.Status() != nats.CONNECTED {
+		log.Printf("Skipping publish for %s: NATS not connected (status: %v)", metric.Filename, nc.Status())
 		return 0
+	} else {
+		log.Printf("Published message for file name:%s size:%.3f KB", metric.Filename, metric.Size/1024)
+		return metric.Size
 	}
 
-	log.Printf("Published message for file name:%s size:%.3f KB", metric.Filename, metric.Size/1024)
-	return metric.Size
 }
