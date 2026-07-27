@@ -3,7 +3,7 @@ package main
 import (
 	"encoding/json"
 	"fmt"
-	"log"
+	"log/slog"
 	"os"
 	"path/filepath"
 	"strings"
@@ -28,7 +28,10 @@ func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 
 		fileInfo, err := os.Stat(logPath)
 		if err != nil {
-			log.Printf("Error accessing file %s: %v", logPath, err)
+			slog.Error("Error accessing log path",
+				"path", logPath,
+				"error", err,
+			)
 			continue
 		}
 
@@ -36,7 +39,10 @@ func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 		if fileInfo.IsDir() {
 			files, err := os.ReadDir(logPath)
 			if err != nil {
-				log.Printf("Error reading directory %s: %v", logPath, err)
+				slog.Error("Error reading directory",
+					"path", logPath,
+					"error", err,
+				)
 				continue
 			}
 
@@ -59,19 +65,19 @@ func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 				totalSize += size
 			}
 		}
-		log.Printf("Total log files processed: %d, Total size: %.4f MB\n\n", totalCount, totalSize/1024/1024)
+		slog.Info("Total log files processed", "count", totalCount, "size", fmt.Sprintf("%.4f MB", totalSize/1024/1024))
 	}
 
 	publishSummary(nc, subjectPrefix, totalCount, totalSize)
-
 	if err := nc.Flush(); err != nil {
-		log.Printf("Error flushing NATS connection: %v", err)
+		slog.Error("Failed to flush NATS connection", "error", err)
 	}
+
 }
 
 func publishSummary(nc *nats.Conn, subjectPrefix string, totalCount int, totalSize float64) {
 	if nc.Status() != nats.CONNECTED {
-		log.Printf("Skipping summary publish: NATS not connected (status: %v)", nc.Status())
+		slog.Warn("Skipping summary publish: NATS not connected", "status", nc.Status())
 		return
 	}
 
@@ -82,15 +88,16 @@ func publishSummary(nc *nats.Conn, subjectPrefix string, totalCount int, totalSi
 
 	jsonData, err := json.Marshal(summary)
 	if err != nil {
-		log.Printf("Error marshaling summary json: %v", err)
+		slog.Error("Error marshaling summary json", "error", err)
 		return
 	}
 
 	subject := fmt.Sprintf("%s.summary", subjectPrefix)
 	if err := nc.Publish(subject, jsonData); err != nil {
-		log.Printf("Error publishing summary: %v", err)
+		slog.Error("Error publishing summary", "error", err)
 		return
 	}
 
-	log.Printf("Published summary: total_count=%d total_size=%.4f MB", totalCount, totalSize/1024/1024)
+	slog.Info("Published summary", "total_count", totalCount, "total_size", fmt.Sprintf("%.4f MB", totalSize/1024/1024))
+	nc.Flush()
 }

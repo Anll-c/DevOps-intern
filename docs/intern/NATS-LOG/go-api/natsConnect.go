@@ -1,7 +1,7 @@
 package main
 
 import (
-	"log"
+	"log/slog"
 	"time"
 
 	"github.com/nats-io/nats.go"
@@ -15,15 +15,15 @@ func connectNATS(natsURL string) (*nats.Conn, error) {
 		nats.ReconnectWait(2*time.Second),
 
 		nats.DisconnectErrHandler(func(nc *nats.Conn, err error) {
-			log.Printf("NATS connection lost: %v", err)
+			slog.Error("NATS disconnected", "error", err)
 		}),
 
 		nats.ReconnectHandler(func(nc *nats.Conn) {
-			log.Printf("NATS reconnected: %s", nc.ConnectedUrl())
+			slog.Info("NATS reconnected", "url", nc.ConnectedUrl())
 		}),
 
 		nats.ClosedHandler(func(nc *nats.Conn) {
-			log.Println("NATS connection closed permanently")
+			slog.Info("NATS connection closed permanently")
 		}),
 	)
 
