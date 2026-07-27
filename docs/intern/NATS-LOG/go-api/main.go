@@ -7,8 +7,6 @@ import (
 	"os"
 	"strings"
 	"time"
-
-	"github.com/nats-io/nats.go"
 )
 
 func main() {
@@ -17,10 +15,11 @@ func main() {
 	subjectPrefix := os.Getenv("NATS_SUBJECT_PREFIX")
 	logPaths := strings.Split(os.Getenv("LOG_PATHS"), ",")
 
-	natsConnection, err := nats.Connect(natsURL)
+	natsConnection, err := connectNATS(natsURL)
 	if err != nil {
-		log.Fatal("Nats Connection error", err)
+		log.Fatal("Failed to connect to NATS:", err)
 	}
+
 	defer natsConnection.Close()
 
 	ticker := time.NewTicker(5 * time.Second)
