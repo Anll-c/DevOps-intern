@@ -1,6 +1,8 @@
 package main
 
 import (
+	"encoding/json"
+	"fmt"
 	"log"
 	"os"
 	"path/filepath"
@@ -10,8 +12,8 @@ import (
 )
 
 type TotalLogStructure struct {
-	TotalCount int `json:"total_count"`
-	TotalSize  int `json:"total_size"`
+	TotalCount int     `json:"total_count"`
+	TotalSize  float64 `json:"total_size"`
 }
 
 func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
@@ -40,14 +42,12 @@ func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 
 			for _, file := range files {
 				if !file.IsDir() && strings.HasSuffix(file.Name(), ".log") {
-					fullPath := filepath.Join(logPath, file.Name()) //filepath
+					fullPath := filepath.Join(logPath, file.Name())
 					info, err := os.Stat(fullPath)
 					if err == nil {
 						size := processLogFile(nc, subjectPrefix, info)
-
 						totalCount++
 						totalSize += size
-
 					}
 				}
 			}
@@ -55,12 +55,42 @@ func publishLogFiles(nc *nats.Conn, logPaths []string, subjectPrefix string) {
 			// .log dosyası ise
 			if strings.HasSuffix(fileInfo.Name(), ".log") {
 				size := processLogFile(nc, subjectPrefix, fileInfo)
-
 				totalCount++
 				totalSize += size
-
 			}
 		}
 		log.Printf("Total log files processed: %d, Total size: %.4f MB\n\n", totalCount, totalSize/1024/1024)
 	}
+
+	publishSummary(nc, subjectPrefix, totalCount, totalSize)
+
+	if err := nc.Flush(); err != nil {
+		log.Printf("Error flushing NATS connection: %v", err)
+	}
+}
+
+func publishSummary(nc *nats.Conn, subjectPrefix string, totalCount int, totalSize float64) {
+	if nc.Status() != nats.CONNECTED {
+		log.Printf("Skipping summary publish: NATS not connected (status: %v)", nc.Status())
+		return
+	}
+
+	summary := TotalLogStructure{
+		TotalCount: totalCount,
+		TotalSize:  totalSize,
+	}
+
+	jsonData, err := json.Marshal(summary)
+	if err != nil {
+		log.Printf("Error marshaling summary json: %v", err)
+		return
+	}
+
+	subject := fmt.Sprintf("%s.summary", subjectPrefix)
+	if err := nc.Publish(subject, jsonData); err != nil {
+		log.Printf("Error publishing summary: %v", err)
+		return
+	}
+
+	log.Printf("Published summary: total_count=%d total_size=%.4f MB", totalCount, totalSize/1024/1024)
 }

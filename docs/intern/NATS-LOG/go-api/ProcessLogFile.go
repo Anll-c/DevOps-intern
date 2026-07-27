@@ -28,7 +28,7 @@ func processLogFile(nc *nats.Conn, subjectPrefix string, fileInfo os.FileInfo) f
 
 	subject := fmt.Sprintf("%s.%s", subjectPrefix, metric.Filename)
 
-	if !nc.IsConnected() {
+	if nc.IsConnected() {
 		err = nc.Publish(subject, jsonData)
 		if err != nil {
 			log.Printf("Error publishing message for file %s: %v", metric.Filename, err)
