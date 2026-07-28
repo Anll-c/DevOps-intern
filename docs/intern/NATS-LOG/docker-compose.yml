@@ -9,6 +9,7 @@ services:
     ports:
       - "${NATS_CLIENT_PORT:-4222}:4222"  
       - "${NATS_MONITOR_PORT:-8222}:8222"
+      - "${NATS_WEBSOCKET_PORT:-8880}:8888"
       #Portlarda hangisi container'a giriş için hangisi host'a giriş ve env ile bu şekilde kullanılmasının sebebi nedir?
     environment:
       NATS_USER: usr
@@ -37,6 +38,20 @@ services:
       APP_LOG_LEVEL: info
     volumes:
       - /var/log:/logs:ro
+    networks:
+      - nats-log-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./DockerFile
+    container_name: nats-log-frontend
+    restart: unless-stopped
+    ports:
+      - "3000:80" # Tarayıcıya http://localhost:3000 olarak açılacak
+    depends_on:
+      - nats
+      - go-api
     networks:
       - nats-log-network
 
