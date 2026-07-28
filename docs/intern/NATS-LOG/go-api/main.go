@@ -14,6 +14,11 @@ func main() {
 	natsURL := os.Getenv("NATS_URL")
 	subjectPrefix := os.Getenv("NATS_SUBJECT_PREFIX")
 	logPaths := strings.Split(os.Getenv("LOG_PATHS"), ",")
+	goPort := os.Getenv("GO_API_PORT")
+	if goPort == "" {
+		slog.Warn("GO_API_PORT environment variable is not set. Using default port 8080.")
+		goPort = "8080"
+	}
 
 	natsConnection, err := connectNATS(natsURL)
 	if err != nil {
@@ -82,6 +87,8 @@ func main() {
 		}
 
 	})
-
-	slog.Error("HTTP server error", "error", http.ListenAndServe(":8080", nil))
+	slog.Info("HTTP server starting", "port", goPort)
+	slog.Error("HTTP server error", "error", http.ListenAndServe(":"+goPort, nil))
 }
+
+//err loglarına bak nats stop ile, log türlerine bak ne eklenebilir düşün.
