@@ -27,17 +27,32 @@ services:
     container_name: nats-log-go-api
     restart: unless-stopped
     ports:
-      - "${GO_API_PORT:-8080}:8080"
+      - "${GO_API_PORT:-9222}:9222"
     depends_on:
       - nats
     environment:
       NATS_URL: nats://usr:usr1935@nats:4222
       NATS_SUBJECT_PREFIX: logs.size
       POLL_INTERVAL: 1s
-      LOG_PATHS: /logs
+      LOG_PATHS: /app/logs
       APP_LOG_LEVEL: info
     volumes:
-      - /var/log:/logs:ro
+      - /var/log:/app/logs:ro
+    networks:
+      - nats-log-network
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: ./DockerFile
+    container_name: nats-log-frontend
+    restart: unless-stopped
+    ports:
+      - "${FRONTEND_PORT:-8080}:8080"
+    depends_on:
+      - go-api
+    environment:
+      GO_API_URL: http://go-api:9222
     networks:
       - nats-log-network
 
