@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="tr">
+<head>
+  <meta charset="utf-8" />
+  <title>NATS Log İzleyici</title>
+  <style>
+    body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
+    h1 { font-size: 1.25rem; }
+    #status { margin-bottom: 1rem; font-size: 0.9rem; }
+    #status.connected { color: #16794f; }
+    #status.disconnected { color: #b3261e; }
+    .controls { margin-bottom: 1rem; }
+    .controls button { padding: 6px 14px; margin-right: 8px; cursor: pointer; }
+    #action-message { font-size: 0.85rem; color: #555; margin-bottom: 1rem; min-height: 1.2em; }
+    table { border-collapse: collapse; width: 100%; max-width: 720px; }
+    th, td { border: 1px solid #ccc; padding: 6px 10px; text-align: left; }
+    th { background: #f3f3f3; }
+    #summary { margin-top: 1rem; font-size: 0.9rem; color: #555; }
+  </style>
+</head>
+<body>
+  <h1>NATS Log Boyutu İzleyici</h1>
+  <div id="status">Bağlanıyor...</div>
+
+  <div class="controls">
+    <button id="start-btn">Start</button>
+    <button id="stop-btn">Stop</button>
+  </div>
+  <div id="action-message"></div>
+
+  <table>
+    <thead>
+      <tr><th>Dosya</th><th>Boyut</th><th>Son Güncelleme</th></tr>
+    </thead>
+    <tbody id="log-table-body"></tbody>
+  </table>
+
+  <div id="summary">Toplam: -</div>
+
+  <script type="module" src="app.js"></script>
+</body>
+</html>
