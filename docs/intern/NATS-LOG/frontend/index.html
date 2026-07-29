@@ -2,7 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="utf-8" />
-  <title>NATS Log İzleyici</title>
+  <title>NATS Log Size Monitor</title>
   <style>
     body { font-family: system-ui, sans-serif; margin: 2rem; color: #222; }
     h1 { font-size: 1.25rem; }
@@ -19,8 +19,8 @@
   </style>
 </head>
 <body>
-  <h1>NATS Log Boyutu İzleyici</h1>
-  <div id="status">Bağlanıyor...</div>
+  <h1>NATS Log Size Monitor</h1>
+  <div id="status">Connecting...</div>
 
   <div class="controls">
     <button id="start-btn">Start</button>
@@ -30,12 +30,12 @@
 
   <table>
     <thead>
-      <tr><th>Dosya</th><th>Boyut</th><th>Son Güncelleme</th></tr>
+      <tr><th>Dosya</th><th>Boyut</th><th>Last Updated</th></tr>
     </thead>
     <tbody id="log-table-body"></tbody>
   </table>
 
-  <div id="summary">Toplam: -</div>
+  <div id="summary">Total: -</div>
 
   <script type="module" src="app.js"></script>
 </body>
