@@ -59,7 +59,7 @@ function setStatus(text, className) {
 // nginx.conf içindeki /api/ reverse proxy sayesinde tarayıcı
 // go-api'ye değil kendi origin'ine (nginx) istek atıyor, CORS sorunu olmuyor.
 async function callBackend(path) {
-  actionMsgEl.textContent = "İşleniyor...";
+  actionMsgEl.textContent = "Process...";
   try {
     const res = await fetch(path, { method: "POST" });
     const data = await res.json();
@@ -86,19 +86,19 @@ async function main() {
       maxReconnectAttempts: -1,
     });
   } catch (err) {
-    setStatus("Bağlantı kurulamadı: " + err.message, "disconnected");
+    setStatus("Connection failed: " + err.message, "disconnected");
     return;
   }
 
-  setStatus("Bağlandı: " + nc.getServer(), "connected");
+  setStatus("Connected: " + nc.getServer(), "connected");
 
   // Bağlantı kopma / yeniden bağlanma durumunu izle
   (async () => {
     for await (const s of nc.status()) {
       if (s.type === "disconnect") {
-        setStatus("Bağlantı koptu, yeniden deneniyor...", "disconnected");
+        setStatus("Connection lost, retrying...", "disconnected");
       } else if (s.type === "reconnect") {
-        setStatus("Yeniden bağlandı: " + nc.getServer(), "connected");
+        setStatus("Reconnected: " + nc.getServer(), "connected");
       }
     }
   })();
