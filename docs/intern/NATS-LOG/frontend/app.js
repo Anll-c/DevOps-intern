@@ -69,8 +69,8 @@ async function callBackend(path) {
   }
 }
 
-startBtn.addEventListener("click", () => callBackend("http://go.api:3000/start"));
-stopBtn.addEventListener("click", () => callBackend("http://go.api:3000/stop"));
+startBtn.addEventListener("click", () => callBackend("/api/start"));
+stopBtn.addEventListener("click", () => callBackend("/api/stop"));
 
 // --- NATS bağlantısı ---
 const sc = new StringCodec();
