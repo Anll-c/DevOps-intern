@@ -8,6 +8,7 @@ RUN apt-get update && \
         git \
         curl \
         ca-certificates \
+        golang-go\
         docker.io \
         docker-compose-v2 && \
     rm -rf /var/lib/apt/lists/*
