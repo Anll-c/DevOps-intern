@@ -2,7 +2,7 @@ pipeline{
     agent any
 
     tools {
-        go 'Go 1.25'
+        go 'NATS-LOG GO'
     }
 
     stages{
