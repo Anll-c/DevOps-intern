@@ -22,7 +22,7 @@ pipeline{
 
             stage('Docker Build'){
                 steps{
-                    sh 'docker-compose build'
+                    sh 'docker compose build'
                 }
             }
 
@@ -31,7 +31,7 @@ pipeline{
                     branch 'main'
                 }
                 steps{
-                    sh 'docker-compose up -d --build'
+                    sh 'docker compose up -d --build'
                 }
             }
         }
