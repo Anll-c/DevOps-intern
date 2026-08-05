@@ -7,7 +7,7 @@
     - name:  Create project directory on the server
       file:
         path: /opt/nats-log-app
-        state: directory
+        state: directory 
         mode: '0755'
 
     - name: Copy project files to the server
