@@ -10,7 +10,7 @@ pipeline{
 
         stage('Go Vet'){
             steps{
-                dir('go-api'){
+                dir('docs/intern/NATS-LOG/go-api'){
                     sh 'go vet ./...'
                 }
             }
