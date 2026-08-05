@@ -2,33 +2,34 @@ pipeline{
     agent any
 
     stages{
-        stage('Checkout'){
-            steps{
-                checkout scm
+            stage('Checkout'){
+                steps{
+                    checkout scm
+                }
             }
-        }
 
-        stage('Go Vet'){
-            steps{
-                dir('docs/intern/NATS-LOG/go-api'){
-                    sh 'go vet ./...'
+            stage('Go Vet'){
+                steps{
+                    dir('docs/intern/NATS-LOG/go-api'){
+                        sh 'go vet ./...'
+                    }
+                }
+            }
+
+            stage('Docker Build'){
+                steps{
+                    sh 'docker compose build -d'
+                }
+            }
+
+            stage('Deploy'){
+                when {
+                    branch 'main'
+                }
+                steps{
+                    sh 'docker compose up -d --build'
                 }
             }
         }
-
-        stage('Docker Build'){
-            steps{
-                sh 'docker compose build'
-            }
-
-        stage('Deploy'){
-            when {
-                branch 'main'
-            }
-            steps{
-                sh 'docker compose up -d --build'
-            }
-        }
     }
-}
 }
