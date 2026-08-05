@@ -1,0 +1,29 @@
+services:
+
+  jenkins:
+    build: .
+
+    container_name: natslog-jenkins
+
+    restart: unless-stopped
+
+    ports:
+      - "2020:8080"
+      - "50000:50000"
+
+    volumes:
+
+      # Jenkins verileri
+      - jenkins_home:/var/jenkins_home
+
+      # Host Docker Engine'i kullan
+      - /var/run/docker.sock:/var/run/docker.sock
+
+      # NATS-LOG projesini container içine bağla
+      - ../:/workspace
+
+    working_dir: /workspace
+
+volumes:
+
+  jenkins_home:

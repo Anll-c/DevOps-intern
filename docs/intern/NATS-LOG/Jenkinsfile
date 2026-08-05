@@ -1,9 +1,6 @@
 pipeline{
     agent any
 
-    tools {
-        go 'NATS-LOG GO'
-    }
 
     stages{
             stage('Checkout'){
@@ -31,7 +28,7 @@ pipeline{
                     branch 'main'
                 }
                 steps{
-                    sh 'docker compose up '
+                    sh 'docker compose up'
                 }
             }
         }
