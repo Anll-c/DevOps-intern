@@ -16,16 +16,19 @@ pipeline{
                 }
             }
 
-            stage('Docker Build'){
-                steps{
-                    sh 'docker compose build'
+            stage('Docker Build') {
+                steps {
+                    dir('docs/intern/NATS-LOG') {
+                        sh 'docker compose build'
+                    }
                 }
             }
 
-            stage('Deploy'){
-
-                steps{
-                    sh 'docker compose up'
+            stage('Deploy') {
+                steps {
+                    dir('docs/intern/NATS-LOG') {
+                        sh 'docker compose up -d'
+                    }
                 }
             }
         }
