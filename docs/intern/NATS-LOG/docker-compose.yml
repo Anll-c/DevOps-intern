@@ -27,7 +27,7 @@ services:
     container_name: nats-log-go-api
     restart: unless-stopped
     ports:
-      - "${GO_API_PORT:-8888}:8080"
+      - "${GO_API_PORT:-8088}:8080"
     depends_on:
       - nats
     environment:

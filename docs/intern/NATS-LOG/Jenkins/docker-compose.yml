@@ -1,49 +1,29 @@
 services:
+
   jenkins:
-    build:
-      context: .
-      dockerfile: Dockerfile
+    build: .
+
     container_name: natslog-jenkins
+
     restart: unless-stopped
+
     ports:
-      - "8080:8080"
+      - "2020:8080"
       - "50000:50000"
+
     volumes:
+
+      # Jenkins verileri
       - jenkins_home:/var/jenkins_home
-      # Jenkins'in host'taki Docker daemon'ı kullanabilmesi için socket mount
+
+      # Host Docker Engine'i kullan
       - /var/run/docker.sock:/var/run/docker.sock
-    networks:
-      - natslog-net
 
-  go-api:
-    build:
-      context: ./go-api
-      dockerfile: Dockerfile
-    container_name: nats-log-go-api
-    restart: unless-stopped
-    env_file:
-      - ./go-api/.env
-    ports:
-      - "8081:8081"
-    networks:
-      - natslog-net
+      # NATS-LOG projesini container içine bağla
+      - ../:/workspace
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: Dockerfile
-    container_name: nats-log-frontend
-    restart: unless-stopped
-    depends_on:
-      - go-api
-    ports:
-      - "3000:3000"
-    networks:
-      - natslog-net
+    working_dir: /workspace
 
 volumes:
-  jenkins_home:
 
-networks:
-  natslog-net:
-    driver: bridge
+  jenkins_home:

@@ -1,96 +1,32 @@
-pipeline {
+pipeline{
     agent any
 
-    environment {
-        // PR build'leri farklı bir compose project adıyla izole ediliyor,
-        // böylece PR deploy'u prod/staging container'larını ezmez.
-        COMPOSE_PROJECT_NAME = "natslog-${env.CHANGE_ID ? 'pr-' + env.CHANGE_ID : env.BRANCH_NAME}"
-    }
-
-    options {
-        // Aynı anda birden fazla build aynı branch/PR için çakışmasın
-        disableConcurrentBuilds()
-        timeout(time: 20, unit: 'MINUTES')
-    }
-
-    stages {
-
-        stage('Checkout') {
-            steps {
-                checkout scm
-                script {
-                    echo "Branch: ${env.BRANCH_NAME}"
-                    echo "Change ID (PR ise dolu olur): ${env.CHANGE_ID ?: 'yok - bu bir PR degil'}"
-                    echo "Compose project: ${env.COMPOSE_PROJECT_NAME}"
+    stages{
+            stage('Checkout'){
+                steps{
+                    checkout scm
                 }
             }
-        }
 
-        stage('Go Vet') {
-            steps {
-                dir('docs/intern/NATS-LOG/go-api') {
-                    sh 'go vet ./...'
+            stage('Go Vet'){
+                steps{
+                    dir('docs/intern/NATS-LOG/go-api'){
+                        sh 'go vet ./...'
+                    }
                 }
             }
-        }
 
-        stage('Go Test') {
-            steps {
-                dir('docs/intern/NATS-LOG/go-api') {
-                    sh 'go test ./... -v'
+            stage('Docker Build'){
+                steps{
+                    sh 'docker compose build'
                 }
             }
-        }
 
-        stage('Docker Build') {
-            steps {
-                dir('docs/intern/NATS-LOG') {
-                    sh 'docker compose -p ${COMPOSE_PROJECT_NAME} build'
-                }
-            }
-        }
+            stage('Deploy'){
 
-        stage('Deploy - PR Staging') {
-            when {
-                expression { env.CHANGE_ID != null }
-            }
-            steps {
-                dir('docs/intern/NATS-LOG') {
-                    sh 'docker compose -p ${COMPOSE_PROJECT_NAME} up -d go-api frontend'
-                }
-            }
-        }
-
-        stage('Deploy - Production') {
-            when {
-                branch 'main'
-            }
-            steps {
-                dir('docs/intern/NATS-LOG') {
-                    sh 'docker compose -p ${COMPOSE_PROJECT_NAME} up -d go-api frontend'
+                steps{
+                    sh 'docker compose up'
                 }
             }
         }
     }
-
-    post {
-        success {
-            script {
-                if (env.CHANGE_ID) {
-                    echo "PR #${env.CHANGE_ID} basariyla build edildi ve staging'e deploy edildi."
-                } else {
-                    echo "Branch ${env.BRANCH_NAME} basariyla build edildi."
-                }
-            }
-        }
-        failure {
-            echo "Build basarisiz oldu. Loglari kontrol et."
-        }
-        cleanup {
-            // PR kapandığında/merge olduğunda staging container'larını temizlemek için
-            // ayrı bir "PR kapandı" job'ı ya da Jenkins'in
-            // "Discard old items"/orphaned PR temizleme ayarını kullanman önerilir.
-            echo "Workspace temizligi Jenkins tarafindan otomatik yapilacak."
-        }
-    }
-}
