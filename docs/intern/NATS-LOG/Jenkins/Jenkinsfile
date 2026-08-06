@@ -16,6 +16,17 @@ pipeline{
                 }
             }
 
+            stage('Install Docker Compose') {
+                steps {
+                    dir('docs/intern/NATS-LOG') {
+                        // Docker Compose aracını o anki workspace içine indiriyoruz
+                        sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose'
+                        // İndirdiğimiz dosyaya çalıştırma yetkisi veriyoruz
+                        sh 'chmod +x docker-compose'
+                    }
+                }
+            }
+
             stage('Docker Build'){
                 steps{
                     sh 'docker compose build'
