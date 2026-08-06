@@ -16,8 +16,9 @@ RUN CGO_ENABLED=0 GOOS=linux go build -o /out/go-api .
 FROM alpine:3.20 
 #alpine dışında ne kullanılabilir(scratch,debian)
 
-RUN apk add --no-cache ca-certificates \
-	&& addgroup -S app \
+RUN apk add --no-cache ca-certificates
+
+RUN addgroup -S app \
 	&& adduser -S app -G app
 
 WORKDIR /app

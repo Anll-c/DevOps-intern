@@ -1,0 +1,35 @@
+pipeline{
+    agent any
+
+    stages{
+            stage('Checkout'){
+                steps{
+                    checkout scm
+                }
+            }
+
+            stage('Go Vet'){
+                steps{
+                    dir('docs/intern/NATS-LOG/go-api'){
+                        sh 'go vet ./...'
+                    }
+                }
+            }
+
+            stage('Docker Build') {
+                steps {
+                    dir('docs/intern/NATS-LOG') {
+                        sh 'docker compose build'
+                    }
+                }
+            }
+
+            stage('Deploy') {
+                steps {
+                    dir('docs/intern/NATS-LOG') {
+                        sh 'docker compose up -d'
+                    }
+                }
+            }
+        }
+    }

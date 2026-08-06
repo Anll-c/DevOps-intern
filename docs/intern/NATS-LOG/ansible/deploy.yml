@@ -1,0 +1,22 @@
+---
+- name: NATS-LOG Deployment
+  hosts: nats_servers
+  become: yes  # Sudo yetkisi al (klasör oluşturmak ve docker çalıştırmak için)
+  
+  tasks:
+    - name:  Create project directory on the server
+      file:
+        path: /opt/nats-log-app
+        state: directory 
+        mode: '0755'
+
+    - name: Copy project files to the server
+      copy:
+        src: ../            # Ansible klasörünün bir üstü (yani tüm NATS-LOG klasörü)
+        dest: /opt/nats-log-app/
+      # Idempotent: Sadece değişen dosyaları kopyalar, aynıysa dokunmaz.
+
+    - name: Build and start the Docker containers
+      command: docker compose up --build -d
+      args:
+        chdir: /opt/nats-log-app/
