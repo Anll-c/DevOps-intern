@@ -9,23 +9,27 @@ RUN apt-get update && \
         curl && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Docker Compose v2'yi CLI plugin olarak kuruyoruz (root için)
-RUN mkdir -p /root/.docker/cli-plugins && \
-    curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-aarch64" \
-        -o /root/.docker/cli-plugins/docker-compose && \
-    chmod +x /root/.docker/cli-plugins/docker-compose
+# jenkins kullanıcısının HOME'u /var/jenkins_home olduğu için
+# Docker CLI plugin'lerini doğrudan oraya kuruyoruz (root'un home'una değil).
+RUN mkdir -p /var/jenkins_home/.docker/cli-plugins
 
-# 2. Buildx eklentisini CLI plugin klasörüne indirip kuruyoruz (root için)
-RUN mkdir -p /root/.docker/cli-plugins && \
-    curl -SL "https://github.com/docker/buildx/releases/latest/download/buildx-v0.17.1.linux-arm64" \
-        -o /root/.docker/cli-plugins/docker-buildx && \
-    chmod +x /root/.docker/cli-plugins/docker-buildx
+# Docker Compose v2 plugin (arm64/aarch64 için)
+RUN curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-aarch64" \
+        -o /var/jenkins_home/.docker/cli-plugins/docker-compose && \
+    chmod +x /var/jenkins_home/.docker/cli-plugins/docker-compose
 
-# 3. Aynı eklentileri jenkins kullanıcısının ev dizinine de kopyalıyoruz
-RUN mkdir -p /var/jenkins_home/.docker/cli-plugins && \
-    cp /root/.docker/cli-plugins/docker-buildx /var/jenkins_home/.docker/cli-plugins/docker-buildx && \
-    cp /root/.docker/cli-plugins/docker-compose /var/jenkins_home/.docker/cli-plugins/docker-compose && \
-    chown -R jenkins:jenkins /var/jenkins_home/.docker
+# Buildx plugin (arm64 için)
+RUN curl -SL "https://github.com/docker/buildx/releases/latest/download/buildx-v0.17.1.linux-arm64" \
+        -o /var/jenkins_home/.docker/cli-plugins/docker-buildx && \
+    chmod +x /var/jenkins_home/.docker/cli-plugins/docker-buildx
+
+RUN chown -R jenkins:jenkins /var/jenkins_home/.docker
 
 RUN usermod -aG docker jenkins
+
+# GitHub Branch Source + Pipeline: Multibranch pluginlerini otomatik kurmak istersen
+# (opsiyonel, Jenkins arayüzünden de kurulabilir) install-plugins.sh kullanılabilir.
+# Burada bilinçli olarak elle kurulmasını bırakıyoruz çünkü plugin sürüm uyumu
+# Jenkins LTS sürümüne göre değişebiliyor.
+
 USER jenkins
