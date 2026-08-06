@@ -20,7 +20,7 @@ pipeline{
             stage('Docker Build'){
                 steps {
                     dir('docs/intern/NATS-LOG') {
-                        sh 'docker-compose build'
+                        sh 'docker compose build'
                     }
                 }
             }
@@ -28,7 +28,9 @@ pipeline{
             stage('Deploy'){
 
                 steps{
-                    sh 'docker-compose up'
+                    dir('docs/intern/NATS-LOG') {
+                        sh 'docker compose up -d'
+                    }
                 }
             }
         }

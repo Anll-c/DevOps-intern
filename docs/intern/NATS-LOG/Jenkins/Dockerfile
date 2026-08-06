@@ -9,18 +9,22 @@ RUN apt-get update && \
         curl && \
     rm -rf /var/lib/apt/lists/*
 
-# 1. Docker Compose'u sistemin genel bin klasörüne indirip yetki veriyoruz
-RUN curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
-    chmod +x /usr/local/bin/docker-compose
-
-# 2. Buildx eklentisini de Docker CLI plugin klasörüne indirip güncel versiyonunu kuruyoruz
+# 1. Docker Compose v2'yi CLI plugin olarak kuruyoruz (root için)
 RUN mkdir -p /root/.docker/cli-plugins && \
-    curl -SL "https://github.com/docker/buildx/releases/latest/download/buildx-v0.17.1.linux-arm64" -o /root/.docker/cli-plugins/docker-buildx && \
+    curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-linux-aarch64" \
+        -o /root/.docker/cli-plugins/docker-compose && \
+    chmod +x /root/.docker/cli-plugins/docker-compose
+
+# 2. Buildx eklentisini CLI plugin klasörüne indirip kuruyoruz (root için)
+RUN mkdir -p /root/.docker/cli-plugins && \
+    curl -SL "https://github.com/docker/buildx/releases/latest/download/buildx-v0.17.1.linux-arm64" \
+        -o /root/.docker/cli-plugins/docker-buildx && \
     chmod +x /root/.docker/cli-plugins/docker-buildx
 
-# Aynı eklentiyi jenkins kullanıcısının ev dizinine de kopyalayarak yetki sorununun önüne geçiyoruz
+# 3. Aynı eklentileri jenkins kullanıcısının ev dizinine de kopyalıyoruz
 RUN mkdir -p /var/jenkins_home/.docker/cli-plugins && \
     cp /root/.docker/cli-plugins/docker-buildx /var/jenkins_home/.docker/cli-plugins/docker-buildx && \
+    cp /root/.docker/cli-plugins/docker-compose /var/jenkins_home/.docker/cli-plugins/docker-compose && \
     chown -R jenkins:jenkins /var/jenkins_home/.docker
 
 RUN usermod -aG docker jenkins
