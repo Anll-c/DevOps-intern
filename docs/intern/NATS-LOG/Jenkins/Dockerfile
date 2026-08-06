@@ -6,12 +6,10 @@ RUN apt-get update && \
         git \
         golang-go \
         docker.io \
+        docker-compose-plugin \
+        docker-buildx-plugin \
         curl && \
     rm -rf /var/lib/apt/lists/*
 
-# Docker Compose'u sistemin genel bin klasörüne indirip yetki veriyoruz
-RUN curl -SL "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o /usr/local/bin/docker-compose && \
-    chmod +x /usr/local/bin/docker-compose
-    
 RUN usermod -aG docker jenkins
 USER jenkins
