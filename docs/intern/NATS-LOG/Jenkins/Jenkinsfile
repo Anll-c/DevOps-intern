@@ -22,7 +22,7 @@ pipeline{
                         // Docker Compose aracını o anki workspace içine indiriyoruz
                         sh 'curl -L "https://github.com/docker/compose/releases/latest/download/docker-compose-$(uname -s)-$(uname -m)" -o docker-compose'
                         // İndirdiğimiz dosyaya çalıştırma yetkisi veriyoruz
-                        sh 'chmod +x docker-compose'
+                        sh 'chmod +x docker compose'
                     }
                 }
             }
