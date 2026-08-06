@@ -1,8 +1,6 @@
 pipeline{
     agent any
 
-    
-
     stages{
             stage('Checkout'){
                 steps{
@@ -25,7 +23,7 @@ pipeline{
             }
 
             stage('Deploy'){
-            
+
                 steps{
                     sh 'docker compose up'
                 }
