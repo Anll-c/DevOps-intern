@@ -41,20 +41,6 @@ services:
     networks:
       - nats-log-network
 
-  frontend:
-    build:
-      context: ./frontend
-      dockerfile: ./DockerFile
-    container_name: nats-log-frontend
-    restart: unless-stopped
-    ports:
-      - "${FRONTEND_PORT:-8080}:8080"
-    depends_on:
-      - go-api
-    environment:
-      GO_API_URL: http://go-api:9222
-    networks:
-      - nats-log-network
 
   frontend:
     build:
